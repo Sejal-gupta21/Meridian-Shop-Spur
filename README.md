@@ -1,80 +1,38 @@
-# Spur AI Live Chat Agent
+# 🚀Meridian Shop — AI-Powered Live Chat Agent
 
-A mini AI-powered customer support chat widget — Spur Founding Full-Stack Engineer take-home assignment.
+> A modern, full-stack customer support chat widget powered by AI. Built with **SvelteKit** (frontend) and **Express + TypeScript** (backend), featuring real-time conversations, session persistence, and seamless deployment to Vercel & Render.
 
-**Live demo:** _(add your deployed URL here)_
+**✨ Features**
+- 💬 Real-time AI responses via OpenAI GPT-4o-mini
+- 🗣️ Multi-turn conversation memory with SQLite persistence
+- 📱 Responsive, accessible chat UI (Svelte)
+- ⚡ Type-safe TypeScript across the stack
+- 🔒 CORS-protected API
+- 📊 Session tracking with localStorage fallback
+- 🚀 Production-ready deployments (Vercel + Render)
 
----
-
-## Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Browser (SvelteKit SPA)                                │
-│  ┌──────────────┐  fetch /chat/message                  │
-│  │  ChatWidget  │ ────────────────────────────────────► │
-│  │  MessageBubble│ ◄─────────────────────────────────── │
-│  │  TypingIndicator│   { reply, sessionId }             │
-│  └──────────────┘                                       │
-│  lib/api.ts  (typed fetch wrapper + timeout + errors)   │
-└─────────────────────────────────────────────────────────┘
-                          │ HTTP
-┌─────────────────────────▼───────────────────────────────┐
-│  Express + TypeScript (backend/)                        │
-│                                                         │
-│  src/                                                   │
-│  ├── routes/chat.routes.ts   (POST /message, GET /history)│
-│  ├── services/               (clear separation)        │
-│  │   ├── llm.service.ts      (OpenAI call, prompting)  │
-│  │   └── conversation.service.ts (DB CRUD)             │
-│  ├── middleware/validate.ts  (Zod input validation)     │
-│  ├── config/                                            │
-│  │   ├── env.ts              (typed env, fails fast)    │
-│  │   └── knowledge.ts        (FAQ / store knowledge)   │
-│  ├── db/database.ts          (SQLite + schema migration)│
-│  └── types/index.ts          (shared interfaces)       │
-└─────────────────────────────────────────────────────────┘
-                          │
-                  ┌───────▼────────┐
-                  │  SQLite (WAL)  │
-                  │  conversations │
-                  │  messages      │
-                  └────────────────┘
-```
-
-### Key design decisions
-
-| Decision | Rationale |
-|---|---|
-| SQLite + better-sqlite3 | Zero-ops, synchronous API fits Express's request/response model; WAL mode is safe for concurrent reads |
-| Zod validation at the boundary | Single source of truth for request shape; trims whitespace, enforces length limits before any DB/LLM call |
-| knowledge.ts separate from prompt logic | Easy to swap for a DB-driven or retrieval-augmented approach |
-| Optimistic UI in the frontend | Instant feedback without waiting for the round-trip |
-| sessionId in localStorage | Simple stateless approach; no auth required; survives page reloads |
-| gpt-4o-mini | ~10× cheaper than gpt-4o; more than capable for structured support Q&A |
+**Live Demo:** (https://meridian-shop-spur-psi.vercel.app) 
 
 ---
 
-## Running Locally
+## 📋 Quick Start
 
 ### Prerequisites
 
-- **Node.js 18+** (LTS recommended)
+- **Node.js 20.x** (required for backend; frontend works with 18+)
 - **npm 9+**
-- An **OpenAI API key** — [get one here](https://platform.openai.com/api-keys)
+- **OpenAI API Key** — Get one free at [platform.openai.com](https://platform.openai.com/api-keys)
 
-> **Windows note:** `better-sqlite3` ships pre-built binaries for Windows x64 so no C++ build tools are required. If you see a compilation error, run `npm install --global windows-build-tools` and retry.
+> **On Windows?** No build tools needed — `better-sqlite3` has prebuilt binaries. If you see errors, install [windows-build-tools](https://www.npmjs.com/package/windows-build-tools).
 
----
-
-### 1 — Clone & enter the repo
+### 1️⃣ Clone & Setup
 
 ```bash
-git clone <your-repo-url>
-cd spur-chat
+git clone https://github.com/Sejal-gupta21/Meridian-Shop-Spur.git
+cd Meridian-Shop-Spur
 ```
 
-### 2 — Backend
+### 2️⃣ Backend Setup (Terminal 1)
 
 ```bash
 cd backend
@@ -82,25 +40,20 @@ cd backend
 # Install dependencies
 npm install
 
-# Create .env from the example
+# Set up environment variables
 cp .env.example .env
 
-# Open .env and set your key:
-# OPENAI_API_KEY=sk-...
-```
+# ⚠️ REQUIRED: Edit .env and add your OpenAI API key
+# GEMINI_API_KEY=sk-... (or your actual Gemini/OpenAI key)
 
-Start the dev server (hot-reloads on file changes):
-
-```bash
+# Start development server
 npm run dev
-# → Server running at http://localhost:3001
+# ✅ Server running at http://localhost:3001
 ```
 
-The SQLite database and schema are **created automatically** on first start at `backend/data/chat.db`. No separate migration step is needed.
+The database (`backend/data/chat.db`) is **created automatically** on first start.
 
-### 3 — Frontend
-
-Open a second terminal:
+### 3️⃣ Frontend Setup (Terminal 2)
 
 ```bash
 cd frontend
@@ -108,190 +61,326 @@ cd frontend
 # Install dependencies
 npm install
 
-# Create .env from the example
+# Set up environment (optional for local dev)
 cp .env.example .env
-# VITE_API_URL=http://localhost:3001  (default — leave as-is for local dev)
-```
 
-Start the dev server:
-
-```bash
+# Start development server
 npm run dev
-# → http://localhost:5173
+# ✅ Open http://localhost:5173 in your browser
 ```
-
-Open **http://localhost:5173** in your browser and start chatting.
 
 ---
 
-## Environment Variables
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Frontend (SvelteKit + Svelte)                              │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  ChatWidget.svelte (UI + state)                     │   │
+│  │  ├── MessageBubble.svelte (display)                 │   │
+│  │  ├── TypingIndicator.svelte (feedback)              │   │
+│  │  └── lib/api.ts (typed HTTP client)                 │   │
+│  └─────────────────────────────────────────────────────┘   │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTPS
+┌──────────────────────▼──────────────────────────────────────┐
+│  Backend (Express + TypeScript)                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Routes                                             │   │
+│  │  ├── POST /chat/message (send + get reply)          │   │
+│  │  ├── GET  /chat/history/:sessionId (get history)    │   │
+│  │  └── GET  /health (status check)                    │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │  Services                                           │   │
+│  │  ├── llm.service.ts (OpenAI integration)            │   │
+│  │  ├── conversation.service.ts (DB CRUD)              │   │
+│  │  └── validate.ts (Zod input validation)             │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │  Data Layer                                         │   │
+│  │  └── database.ts (SQLite + auto-migration)          │   │
+│  └─────────────────────────────────────────────────────┘   │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+              ┌────────▼─────────┐
+              │  SQLite DB       │
+              │  conversations   │
+              │  messages        │
+              └──────────────────┘
+```
+
+### 🎯 Key Design Principles
+
+| Aspect | Decision | Why |
+|--------|----------|-----|
+| **Database** | SQLite + better-sqlite3 | Zero ops, sync API, WAL mode safe for reads |
+| **Validation** | Zod schemas at boundary | Type-safe, composable, fail-fast |
+| **State** | sessionId in localStorage | Stateless backend, survives reloads |
+| **LLM** | gpt-4o-mini | 10× cheaper, very capable for structured Q&A |
+| **API Style** | REST + JSON | Simple, cacheable, widely supported |
+| **Error Handling** | Typed errors in UI | Users see friendly messages, not stack traces |
+
+---
+
+## 🔧 Environment Variables
 
 ### Backend (`backend/.env`)
 
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | `3001` | Express server port |
-| `NODE_ENV` | `development` | `development` \| `production` |
-| `OPENAI_API_KEY` | _(required)_ | OpenAI API key |
-| `DATABASE_PATH` | `./data/chat.db` | Path to the SQLite file |
-| `CORS_ORIGIN` | `http://localhost:5173` | Allowed frontend origin |
-| `MAX_MESSAGE_LENGTH` | `5000` | Hard cap on incoming message length (characters) |
-| `MAX_HISTORY_MESSAGES` | `20` | Max messages sent to the LLM as context (≈ 10 turns) |
+```dotenv
+# Server
+PORT=3001
+NODE_ENV=production
+
+# Database
+DATABASE_PATH=/data/chat.db          # Use /data on Render for persistence
+
+# LLM (REQUIRED)
+GEMINI_API_KEY=sk-your-openai-key...
+
+# Frontend URL (CORS)
+CORS_ORIGIN=https://your-frontend.vercel.app
+
+# Limits
+MAX_MESSAGE_LENGTH=5000
+MAX_HISTORY_MESSAGES=20
+```
+
+> ⚠️ **Important:** `CORS_ORIGIN` must NOT have a trailing slash. ✅ `https://example.com` ❌ `https://example.com/`
 
 ### Frontend (`frontend/.env`)
 
-| Variable | Default | Description |
-|---|---|---|
-| `VITE_API_URL` | `http://localhost:3001` | Backend base URL |
+```dotenv
+# Backend API URL
+VITE_API_URL=https://your-backend.onrender.com
+```
 
 ---
 
-## API Reference
+## 📡 API Reference
 
-### `POST /chat/message`
+### Send a Message
 
-**Request body:**
-```json
+```bash
+POST /chat/message
+Content-Type: application/json
+
 {
   "message": "What is your return policy?",
-  "sessionId": "uuid-v4-optional"
+  "sessionId": "optional-uuid-v4"  # If omitted, new session created
 }
 ```
 
-**Success response `200`:**
+**✅ Response (200)**
 ```json
 {
-  "reply": "We offer a 30-day return window...",
+  "reply": "We offer a 30-day return window on all merchandise...",
   "sessionId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-**Validation error `400`:**
+**❌ Validation Error (400)**
 ```json
 {
-  "error": "Validation error",
-  "details": [{ "field": "message", "message": "Message cannot be empty" }]
+  "error": "Validation failed",
+  "details": [
+    { "field": "message", "message": "Message is required" }
+  ]
 }
 ```
 
-### `GET /chat/history/:sessionId`
+### Get Conversation History
 
-Returns all messages for an existing conversation. Returns `{ sessionId, messages: [] }` if the session doesn't exist (graceful).
+```bash
+GET /chat/history/{sessionId}
+```
 
-### `GET /health`
+**Response**
+```json
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+  "messages": [
+    { "id": "...", "sender": "user", "text": "Hi", "created_at": "2026-06-15T13:00:00Z" },
+    { "id": "...", "sender": "ai", "text": "Hello! How can I help?", "created_at": "2026-06-15T13:00:02Z" }
+  ]
+}
+```
 
-Returns `{ "status": "ok", "timestamp": "…" }`.
+### Health Check
 
----
+```bash
+GET /health
+```
 
-## Database Schema
-
-```sql
-conversations
-  id          TEXT  PRIMARY KEY          -- UUID v4
-  created_at  TEXT  NOT NULL             -- ISO 8601 UTC
-  updated_at  TEXT  NOT NULL
-  metadata    TEXT  NOT NULL DEFAULT '{}' -- JSON, extensible
-
-messages
-  id               TEXT  PRIMARY KEY
-  conversation_id  TEXT  NOT NULL REFERENCES conversations(id)
-  sender           TEXT  NOT NULL  -- 'user' | 'ai'
-  text             TEXT  NOT NULL
-  created_at       TEXT  NOT NULL
+**Response**
+```json
+{ "status": "ok", "timestamp": "2026-06-15T13:00:00Z" }
 ```
 
 ---
 
-## LLM Notes
-
-- **Provider:** OpenAI
-- **Model:** `gpt-4o-mini` — fast, cheap (~$0.15 / 1M input tokens), very capable for structured support Q&A
-- **System prompt:** `STORE_KNOWLEDGE` in `backend/src/config/knowledge.ts` — a single, well-structured prompt that contains the full FAQ for the fictional *Meridian Shop*. Keeping it in one file makes it trivial to swap for a DB-driven or RAG approach later.
-- **Context window:** The last `MAX_HISTORY_MESSAGES` (default 20) messages are sent so replies stay contextual across multi-turn conversations.
-- **`max_tokens: 500`** — enough for a detailed support answer (~375 words); prevents runaway costs.
-- **Temperature: 0.7** — balanced between deterministic and natural-sounding.
-- **Error handling:** `RateLimitError`, `AuthenticationError`, `APIConnectionError`, and `APITimeoutError` from the OpenAI SDK are each caught and surfaced as a user-friendly message in the UI. A 30-second request timeout is set on the client.
-
----
-
-## Trade-offs & "If I Had More Time…"
-
-| What I kept simple | What I'd do with more time |
-|---|---|
-| SQLite file-based DB | Migrate to PostgreSQL for multi-instance deployments |
-| In-memory OpenAI client (singleton) | Add proper dependency injection or a service container |
-| No auth | Add session tokens so users can't read each other's history |
-| FAQ hardcoded in `knowledge.ts` | Build an admin UI to edit FAQs; store in DB; add embeddings for RAG retrieval |
-| `adapter-auto` for frontend | Use `adapter-node` or `adapter-static` explicitly depending on deploy target |
-| No tests | Add Vitest unit tests for services and Playwright e2e for the chat flow |
-| Single CORS origin | Make CORS configurable per environment via env list |
-| No rate limiting on the backend | Add `express-rate-limit` to protect the `/chat/message` endpoint from abuse |
-| Redis cache | Cache recent conversation history reads to reduce DB hits under load |
-
----
-
-## Deploying
-
-### Backend → [Render](https://render.com) (free tier)
-
-1. Push your repo to GitHub.
-2. New Web Service → connect repo → **Root directory:** `backend`.
-3. Build command: `npm install && npm run build`
-4. Start command: `node dist/index.js`
-5. Add environment variables (especially `OPENAI_API_KEY`, `CORS_ORIGIN`).
-
-### Frontend → [Vercel](https://vercel.com) (free tier)
-
-1. Import the repo on Vercel → **Root directory:** `frontend`.
-2. Framework preset: **SvelteKit**.
-3. Add `VITE_API_URL` pointing to your Render backend URL.
-
----
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-spur-chat/
-├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   │   ├── env.ts                  # Typed env with fail-fast validation
-│   │   │   └── knowledge.ts            # Store FAQ injected into every prompt
-│   │   ├── db/
-│   │   │   └── database.ts             # SQLite connection + auto-migration
-│   │   ├── middleware/
-│   │   │   └── validate.ts             # Zod body-validation factory
-│   │   ├── routes/
-│   │   │   └── chat.routes.ts          # POST /message  GET /history/:id
-│   │   ├── services/
-│   │   │   ├── conversation.service.ts # DB CRUD
-│   │   │   └── llm.service.ts          # OpenAI wrapper
-│   │   ├── types/
-│   │   │   └── index.ts                # Shared TypeScript interfaces
-│   │   └── index.ts                    # Express app + bootstrap
-│   ├── .env.example
-│   ├── package.json
-│   └── tsconfig.json
+Meridian-Shop-Spur/
 │
-├── frontend/
+├── 📦 backend/
 │   ├── src/
-│   │   ├── lib/
-│   │   │   ├── api.ts                  # Typed fetch wrapper (timeout, errors)
-│   │   │   └── components/
-│   │   │       ├── ChatWidget.svelte   # Main chat logic + layout
-│   │   │       ├── MessageBubble.svelte
-│   │   │       └── TypingIndicator.svelte
+│   │   ├── index.ts                    # Express app bootstrap
+│   │   ├── config/
+│   │   │   ├── env.ts                  # Typed env validation (Zod)
+│   │   │   └── knowledge.ts            # Store FAQ/knowledge base
+│   │   ├── db/
+│   │   │   └── database.ts             # SQLite connection & migrations
+│   │   ├── middleware/
+│   │   │   └── validate.ts             # Request validation (Zod)
 │   │   ├── routes/
-│   │   │   ├── +layout.svelte
-│   │   │   └── +page.svelte
-│   │   ├── app.css
-│   │   └── app.html
-│   ├── .env.example
+│   │   │   └── chat.routes.ts          # Chat endpoints
+│   │   ├── services/
+│   │   │   ├── llm.service.ts          # OpenAI wrapper
+│   │   │   └── conversation.service.ts # DB operations
+│   │   └── types/
+│   │       └── index.ts                # Shared TypeScript types
+│   ├── package.json                    # Node 20.x required
+│   ├── tsconfig.json
+│   └── .env.example
+│
+├── 📦 frontend/
+│   ├── src/
+│   │   ├── routes/
+│   │   │   ├── +page.svelte            # Main chat page
+│   │   │   └── +layout.svelte          # App layout
+│   │   ├── lib/
+│   │   │   ├── api.ts                  # Fetch wrapper (errors, timeout)
+│   │   │   └── components/
+│   │   │       ├── ChatWidget.svelte   # Main chat component
+│   │   │       ├── MessageBubble.svelte # Message display
+│   │   │       └── TypingIndicator.svelte # Loading state
+│   │   ├── app.css                     # Styles
+│   │   └── app.html                    # HTML template
 │   ├── package.json
 │   ├── svelte.config.js
+│   ├── vite.config.ts
 │   ├── tsconfig.json
-│   └── vite.config.ts
+│   └── .env.example
 │
-└── README.md
+└── README.md (this file)
 ```
+
+---
+
+## 🗄️ Database Schema
+
+```sql
+CREATE TABLE conversations (
+  id TEXT PRIMARY KEY,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  metadata TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE messages (
+  id TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  sender TEXT NOT NULL CHECK(sender IN ('user', 'ai')),
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
+```
+
+---
+
+## 🚀 Deployment
+
+### Deploy Frontend to Vercel
+
+1. **Connect repo** to [Vercel](https://vercel.com) (GitHub auth)
+2. **Settings:**
+   - Framework: **SvelteKit**
+   - Root Directory: **`frontend`**
+   - Node Version: **20.x**
+3. **Environment Variables:**
+   - `VITE_API_URL` = your Render backend URL (e.g., `https://your-backend.onrender.com`)
+4. **Deploy** → Auto-deploys on push to `main`
+
+### Deploy Backend to Render
+
+1. **Create Web Service** on [Render](https://render.com)
+2. **Settings:**
+   - Repository: Connect GitHub repo
+   - Root Directory: **`backend`**
+   - Build Command: `npm install && npm run build`
+   - Start Command: `npm run start`
+   - Node Version: **20.x** (auto-detected from `package.json`)
+3. **Environment Variables:**
+   ```
+   NODE_ENV=production
+   GEMINI_API_KEY=sk-...
+   CORS_ORIGIN=https://your-frontend.vercel.app
+   DATABASE_PATH=/data/chat.db
+   MAX_MESSAGE_LENGTH=5000
+   MAX_HISTORY_MESSAGES=20
+   ```
+4. **Persistent Disk:**
+   - Add a Render Disk
+   - Mount Path: `/data`
+   - Size: **1 GB** (enough for millions of messages)
+5. **Deploy** → Auto-deploys on push to `main`
+
+---
+
+## 🐛 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **"Cannot find module 'zod'"** | Run `npm install` in backend/; check `node_modules` exists |
+| **CORS error in browser console** | Check `CORS_ORIGIN` in backend `.env` matches frontend URL (no trailing `/`) |
+| **Cannot connect to backend** | Verify backend is running (`http://localhost:3001/health`); check network tab for 404/500 |
+| **Database file not created** | Ensure `DATABASE_PATH` directory exists; backend auto-migrates on first start |
+| **"Better-sqlite3 compile error"** | You may have Node 24+ (incompatible); add `"engines": { "node": "20.x" }` to `package.json` |
+| **Frontend won't build on Vercel** | Ensure `svelte.config.js` has `adapter: vercel({ runtime: 'nodejs20.x' })` |
+| **Gemini API 429 errors** | Upgrade your OpenAI plan or add rate limiting middleware |
+
+---
+
+## 🧪 Development Tips
+
+**Run TypeScript checks:**
+```bash
+# Backend
+cd backend && npm run build
+
+# Frontend  
+cd frontend && npm run check
+```
+
+**View SQLite database:**
+```bash
+# Install sqlite3 CLI, then:
+sqlite3 backend/data/chat.db
+sqlite> SELECT * FROM messages;
+```
+
+**Test backend locally:**
+```bash
+curl -X POST http://localhost:3001/chat/message \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello!"}'
+```
+
+---
+
+## 📝 License
+
+This project is part of the Spur take-home assignment. All rights reserved.
+
+---
+
+## 🤝 Support
+
+For questions or issues:
+1. Check the **Troubleshooting** section above
+2. Review backend/frontend `.env.example` files
+3. Check deployment service logs (Vercel, Render dashboards)
+4. Verify `Node.js 20.x` is being used
